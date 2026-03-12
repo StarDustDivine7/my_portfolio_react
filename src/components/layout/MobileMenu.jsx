@@ -60,11 +60,10 @@ const MobileMenu = ({ isOpen, onClose, menuItems, activeSection, onNavigate }) =
                         ref={index === 0 ? firstItemRef : index === menuItems.length - 1 ? lastItemRef : null}
                         onClick={() => onNavigate(item.id)}
                         onKeyDown={(e) => handleKeyDown(e, item.id, index === 0, index === menuItems.length - 1)}
-                        className={`w-full text-left px-4 py-3 rounded-lg text-base font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[44px] ${
-                          activeSection === item.id
-                            ? 'text-primary-400 bg-primary-600/20'
-                            : 'text-gray-300 hover:text-white hover:bg-dark-700'
-                        }`}
+                        className={`w-full text-left px-4 py-3 rounded-lg text-base font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[44px] ${activeSection === item.id
+                          ? 'text-primary-400 bg-primary-600/20'
+                          : 'text-gray-300 hover:text-white hover:bg-dark-700'
+                          }`}
                         aria-current={activeSection === item.id ? 'page' : undefined}
                       >
                         {item.label}

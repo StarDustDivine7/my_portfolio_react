@@ -59,6 +59,7 @@ const Button = ({
 
   return (
     <motion.button
+      type={variant === 'primary' || variant === 'secondary' ? 'button' : 'button'} // Default to button
       onClick={onClick}
       className={combinedStyles}
       aria-label={ariaLabel}
