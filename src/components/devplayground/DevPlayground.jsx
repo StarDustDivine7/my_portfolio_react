@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../ui/Button';
 import CodeEditor from './CodeEditor';
@@ -27,14 +27,24 @@ const judge0Languages = {
   go: 107
 };
 
+const createLog = (type, content) => ({
+  id: Math.random().toString(36).substr(2, 9),
+  timestamp: new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+  type,
+  content
+});
+
 const DevPlayground = () => {
   const [code, setCode] = useState(boilerplates.javascript);
   const [language, setLanguage] = useState('javascript');
-  const [logs, setLogs] = useState([]);
+  const [logs, setLogs] = useState([createLog('log', 'Terminal initialized. Type some code and hit Run!')]);
   const [messages, setMessages] = useState([]);
   const [isExecuting, setIsExecuting] = useState(false);
   const [isExplaining, setIsExplaining] = useState(false);
   const [activeTab, setActiveTab] = useState('editor');
+  const [splitHeight, setSplitHeight] = useState(50); // percentage for editor
+  const [isResizing, setIsResizing] = useState(false);
+  const containerRef = useRef(null);
 
   const languages = [
     { id: 'javascript', label: 'JavaScript' },
@@ -47,12 +57,6 @@ const DevPlayground = () => {
     { id: 'go', label: 'Go' }
   ];
 
-  const createLog = (type, content) => ({
-    id: Math.random().toString(36).substr(2, 9),
-    timestamp: new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-    type,
-    content
-  });
 
   const handleLanguageChange = (newLang) => {
     setLanguage(newLang);
@@ -79,35 +83,30 @@ const DevPlayground = () => {
   };
 
   const runJavaScriptLocally = () => {
-    const capturedLogs = [];
-    const originalLog = console.log;
-    const originalError = console.error;
-
-    console.log = (...args) => {
-      capturedLogs.push(createLog('log', args.map(arg =>
-        typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
-      ).join(' ')));
-    };
-
-    console.error = (...args) => {
-      capturedLogs.push(createLog('error', args.map(arg => String(arg)).join(' ')));
-    };
-
-    try {
-      // Evaluate the user's code
-      // eslint-disable-next-line no-eval
-      eval(code);
-      if (capturedLogs.length === 0) {
-        capturedLogs.push(createLog('log', 'Code executed successfully (no output).'));
-      }
-    } catch (err) {
-      capturedLogs.push(createLog('error', `Runtime Error: ${err.message}`));
-    } finally {
-      console.log = originalLog;
-      console.error = originalError;
-      setLogs(capturedLogs);
+    const worker = new Worker(new URL('./executionWorker.js', import.meta.url));
+    const timeoutId = setTimeout(() => {
+      worker.terminate();
+      setLogs(prev => [...prev, createLog('error', 'Execution Timed Out (5s). Possible infinite loop detected.')]);
       setIsExecuting(false);
-    }
+    }, 5000);
+
+    worker.onmessage = (e) => {
+      clearTimeout(timeoutId);
+      if (e.data.type === 'result') {
+        setLogs(e.data.logs);
+      }
+      setIsExecuting(false);
+      worker.terminate();
+    };
+
+    worker.onerror = (err) => {
+      clearTimeout(timeoutId);
+      setLogs(prev => [...prev, createLog('error', `Worker Error: ${err.message}`)]);
+      setIsExecuting(false);
+      worker.terminate();
+    };
+
+    worker.postMessage({ code });
   };
 
   const runCodeRemotely = async () => {
@@ -171,27 +170,109 @@ const DevPlayground = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, language]);
 
+  useEffect(() => {
+    localStorage.setItem(`playground-snippet-${language}`, code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, language]);
+
+  const handleMouseMove = useCallback((e) => {
+    if (!isResizing || !containerRef.current) return;
+
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const relativeY = e.clientY - containerRect.top;
+    const percentage = (relativeY / containerRect.height) * 100;
+
+    // Constraints: min 20%, max 80%
+    if (percentage > 20 && percentage < 80) {
+      setSplitHeight(percentage);
+    }
+  }, [isResizing]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsResizing(false);
+  }, []);
+
+  useEffect(() => {
+    if (isResizing) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    } else {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing, handleMouseMove, handleMouseUp]);
+
+  const handleApplyCode = (newCode) => {
+    setCode(newCode.trim());
+    setActiveTab('editor');
+    setLogs([createLog('log', 'AI code applied to editor.')]);
+  };
+
   const handleSendMessage = async (input) => {
     const userMessage = { role: 'user', content: input };
     setMessages(prev => [...prev, userMessage]);
     setIsExplaining(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Get error logs for context
+      const errorLogs = logs.filter(l => l.type === 'error').map(l => l.content).join('\n');
+
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a Friendly Senior Developer Mentor. You are helping a developer with their ${language} project.
+              
+              Current Workspace Context:
+              - Language: ${language}
+              - Code in Editor:
+              \`\`\`${language}
+              ${code}
+              \`\`\`
+              ${errorLogs ? `- Current Console Errors:\n${errorLogs}` : ''}
+              
+              Conversation Guidelines:
+              1. **Human-First**: Respond naturally to greetings (hi, hello, how are you). Don't jump into code immediately unless asked.
+              2. **Helpful Mentor**: Explain concepts, ask clarifying questions, and guide the user like a human pair programmer.
+              3. **Conditional Code**: Only provide code blocks when:
+                 - The user explicitly asks for code or a fix.
+                 - You are responding to a "Debug", "Review", or "Optimize" request.
+                 - A technical solution is best explained through a snippet.
+              4. **Action-Oriented**: For technical solutions, continue to use \`\`\`${language} markdown blocks so the user can use the "Apply to Editor" feature.
+              5. **Tone**: Technical but warm, encouraging, and collaborative.`
+            },
+            ...messages.map(m => ({ role: m.role, content: m.content })),
+            { role: 'user', content: input }
+          ],
+          temperature: 0.7,
+          max_tokens: 2048
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to connect to AI engine');
+      }
+
+      const data = await response.json();
       const aiResponse = {
         role: 'assistant',
-        content: `I've analyzed your ${language} code. 
-
-Based on your input "${input}", here's my advice:
-- The logic looks solid.
-- In ${language}, it's best practice to handle edge cases like null or undefined inputs.
-- Performance-wise, this is efficient for small inputs.
-
-Would you like me to refactor this code or explain a specific part?`
+        content: data.choices[0].message.content
       };
       setMessages(prev => [...prev, aiResponse]);
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' }]);
+      console.error('AI Chat Error:', error);
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error connecting to Groq. Please check your connection.' }]);
     } finally {
       setIsExplaining(false);
     }
@@ -265,10 +346,16 @@ Would you like me to refactor this code or explain a specific part?`
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-auto lg:h-[750px] items-stretch">
+        <div
+          ref={containerRef}
+          className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-auto lg:h-[750px] items-stretch"
+        >
           {/* Main Workspace */}
-          <div className={`lg:col-span-12 xl:col-span-9 flex flex-col gap-6 h-[750px] lg:h-full overflow-hidden ${activeTab === 'editor' || activeTab === 'console' ? 'block' : 'hidden lg:flex'}`}>
-            <div className={`flex flex-col h-1/2 min-h-0 transition-all ${activeTab === 'console' ? 'hidden lg:flex' : 'flex'}`}>
+          <div className={`lg:col-span-12 xl:col-span-9 flex flex-col gap-4 h-[750px] lg:h-full overflow-hidden ${activeTab === 'editor' || activeTab === 'console' ? 'block' : 'hidden lg:flex'}`}>
+            <div
+              style={{ height: `${splitHeight}%` }}
+              className={`flex flex-col min-h-0 transition-all ${activeTab === 'console' ? 'hidden lg:flex' : 'flex'} ${isResizing ? 'pointer-events-none' : ''}`}
+            >
               <div className="flex items-center justify-between px-4 py-2 bg-dark-800/80 border border-b-0 border-dark-700/50 rounded-t-xl">
                 <div className="flex gap-1.5">
                   <div className="w-3 h-3 rounded-full bg-red-500/50" />
@@ -293,7 +380,18 @@ Would you like me to refactor this code or explain a specific part?`
               />
             </div>
 
-            <div className={`flex-1 min-h-0 transition-all ${activeTab === 'editor' ? 'hidden lg:block' : 'block'}`}>
+            {/* Resize Handle */}
+            <div
+              onMouseDown={() => setIsResizing(true)}
+              className="hidden lg:flex items-center justify-center h-2 group cursor-row-resize hover:bg-primary-500/20 rounded-full transition-colors active:bg-primary-500/40"
+            >
+              <div className="w-12 h-1 bg-dark-600 group-hover:bg-primary-500/50 rounded-full" />
+            </div>
+
+            <div
+              style={{ height: `${100 - splitHeight}%` }}
+              className={`flex-1 min-h-0 transition-all ${activeTab === 'editor' ? 'hidden lg:block' : 'block'}`}
+            >
               <ConsoleOutput logs={logs} clearLogs={clearLogs} />
             </div>
           </div>
@@ -304,6 +402,7 @@ Would you like me to refactor this code or explain a specific part?`
               messages={messages}
               isLoading={isExplaining}
               onSendMessage={handleSendMessage}
+              onApplyCode={handleApplyCode}
             />
           </div>
         </div>

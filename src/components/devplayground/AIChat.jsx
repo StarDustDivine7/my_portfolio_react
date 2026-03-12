@@ -1,7 +1,24 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const AIChat = ({ messages, isLoading, onSendMessage }) => {
+const MessageItem = React.memo(({ msg, onApplyCode, renderContent }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+  >
+    <div
+      className={`max-w-[95%] p-3 rounded-2xl text-sm ${msg.role === 'user'
+        ? 'bg-primary-600 text-white rounded-tr-none'
+        : 'bg-dark-700/50 text-gray-200 border border-dark-600 rounded-tl-none'
+        }`}
+    >
+      {renderContent(msg.content)}
+    </div>
+  </motion.div>
+));
+
+const AIChat = ({ messages, isLoading, onSendMessage, onApplyCode }) => {
   const [input, setInput] = useState('');
   const scrollRef = useRef(null);
 
@@ -19,6 +36,35 @@ const AIChat = ({ messages, isLoading, onSendMessage }) => {
     }
   };
 
+  const renderContent = useCallback((content) => {
+    const parts = content.split(/(```[\s\S]*?```)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('```')) {
+        const match = part.match(/```(\w+)?\n([\s\S]*?)```/);
+        const code = match ? match[2] : part.slice(3, -3);
+        const lang = match ? match[1] : '';
+
+        return (
+          <div key={i} className="my-3 rounded-lg overflow-hidden border border-dark-600 bg-dark-900/50 group relative">
+            <div className="flex items-center justify-between px-3 py-1.5 bg-dark-800 border-b border-dark-600">
+              <span className="text-[10px] text-dark-400 uppercase font-bold tracking-wider">{lang || 'code'}</span>
+              <button
+                onClick={() => onApplyCode(code)}
+                className="text-[10px] bg-primary-500/10 hover:bg-primary-500/20 text-primary-400 px-2 py-1 rounded transition-colors font-bold uppercase"
+              >
+                Apply to Editor
+              </button>
+            </div>
+            <pre className="p-3 text-xs font-mono overflow-x-auto custom-scrollbar">
+              <code>{code}</code>
+            </pre>
+          </div>
+        );
+      }
+      return <div key={i} className="whitespace-pre-wrap leading-relaxed">{part}</div>;
+    });
+  }, [onApplyCode]);
+
   return (
     <div className="flex flex-col h-full rounded-xl border border-dark-700/50 bg-dark-800/30 overflow-hidden shadow-lg backdrop-blur-md">
       <div className="flex items-center gap-2 px-4 py-3 bg-dark-800/80 border-b border-dark-700/50">
@@ -26,10 +72,28 @@ const AIChat = ({ messages, isLoading, onSendMessage }) => {
         <span className="text-sm font-bold text-primary-400 uppercase tracking-widest">AI Code Assistant</span>
       </div>
 
-      <div 
+      <div
         ref={scrollRef}
         className="flex-1 min-h-0 p-4 overflow-y-auto space-y-4 custom-scrollbar"
       >
+        {/* Agent Quick Actions */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {[
+            { id: 'review', label: 'Review Code', icon: '📝' },
+            { id: 'debug', label: 'Debug Errors', icon: '🪲' },
+            { id: 'optimize', label: 'Optimize for Web', icon: '🚀' }
+          ].map(action => (
+            <button
+              key={action.id}
+              onClick={() => onSendMessage(`Please ${action.id} my code.`)}
+              className="text-[10px] flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-dark-700/50 hover:bg-primary-500/20 border border-dark-600 hover:border-primary-500/50 text-gray-400 hover:text-primary-400 transition-all font-bold uppercase tracking-wider group"
+            >
+              <span>{action.icon}</span>
+              {action.label}
+            </button>
+          ))}
+        </div>
+
         {messages.length === 0 ? (
           <div className="text-center py-10">
             <p className="text-sm text-dark-500 italic px-6">
@@ -38,21 +102,12 @@ const AIChat = ({ messages, isLoading, onSendMessage }) => {
           </div>
         ) : (
           messages.map((msg, index) => (
-            <motion.div
+            <MessageItem
               key={index}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[85%] p-3 rounded-2xl text-sm ${msg.role === 'user'
-                    ? 'bg-primary-600 text-white rounded-tr-none'
-                    : 'bg-dark-700/50 text-gray-200 border border-dark-600 rounded-tl-none'
-                  }`}
-              >
-                <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
-              </div>
-            </motion.div>
+              msg={msg}
+              onApplyCode={onApplyCode}
+              renderContent={renderContent}
+            />
           ))
         )}
 

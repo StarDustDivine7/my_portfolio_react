@@ -10,7 +10,7 @@ const Footer = () => {
             © {currentYear} Debabrata Dutta. All rights reserved.
           </p>
           <p className="text-gray-500 text-xs mt-2">
-            Built with React, Tailwind CSS, and Framer Motion
+            Built with React, Groq, Tailwind CSS, and Framer Motion
           </p>
         </div>
       </div>
