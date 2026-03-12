@@ -218,6 +218,16 @@ const DevPlayground = () => {
     setIsExplaining(true);
 
     try {
+      // Debug: Check if key is available
+      if (!import.meta.env.VITE_GROQ_API_KEY) {
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: '⚠️ **Missing API Key**: The Groq API key is not configured in this environment. If this is the live site, please ensure `VITE_GROQ_API_KEY` is added to GitHub Secrets.'
+        }]);
+        setIsExplaining(false);
+        return;
+      }
+
       // Get error logs for context
       const errorLogs = logs.filter(l => l.type === 'error').map(l => l.content).join('\n');
 
