@@ -1,51 +1,38 @@
 export const projects = [
   {
     id: "project-1",
-    name: "FinTech Mobile App",
-    description: "Cross-platform mobile banking application with real-time transaction tracking, secure authentication, and seamless payment integration. Built with Clean Architecture principles.",
-    technologies: ["Flutter", "Firebase", "GetX", "REST APIs"],
-    image: "/projects/fintech-app.png",
-    demoUrl: "https://demo.example.com/fintech",
-    codeUrl: "https://github.com/StarDustDivine7/fintech-app"
+    name: "Stock Knock",
+    description: "A dual-platform fintech onboarding system designed for the stock market. It features separate applications for investors and companies, streamlining the onboarding process with secure data handling and real-time validation.",
+    technologies: ["Flutter", "Firebase", "Node.js", "Securities API"],
+    image: "/my_portfolio_react/projects/stock-knock.png",
+    demoUrl: "https://play.google.com/store/search?q=Stock%20Knocks&c=apps&hl=en_IN",
+    codeUrl: null
   },
   {
     id: "project-2",
-    name: "Healthcare Management System",
-    description: "Comprehensive healthcare platform featuring appointment scheduling, patient records management, and telemedicine capabilities with video calling integration.",
-    technologies: ["Flutter", "Firestore", "Riverpod", "WebSockets"],
-    image: "/projects/healthcare-app.png",
-    demoUrl: "https://demo.example.com/healthcare"
+    name: "Wigian ERP",
+    description: "An enterprise-grade employee management solution. Features include attendance tracking, comprehensive leave management, and a secure geofenced login system to ensure workplace compliance and operational efficiency.",
+    technologies: ["Flutter", "Geofencing", "ERP", "Rest API"],
+    image: "/my_portfolio_react/projects/wigian-erp.png",
+    demoUrl: "https://play.google.com/store/apps/details?id=com.webingo_erp.webingo_erp&hl=en_IN",
+    codeUrl: null
   },
   {
     id: "project-3",
-    name: "Social Media Platform",
-    description: "Feature-rich social networking app with real-time chat, media sharing, and AI-powered content recommendations using LLM integration.",
-    technologies: ["Flutter", "Firebase", "BLoC", "Socket.IO", "LLM"],
-    image: "/projects/social-app.png",
-    codeUrl: "https://github.com/StarDustDivine7/social-platform"
+    name: "Miverse",
+    description: "A high-performance social networking platform. Miverse supports rich user interactions including post sharing, likes, and comments, alongside advanced features like real-time chat and high-quality video calling.",
+    technologies: ["Flutter", "WebRTC", "Socket.io", "Firebase"],
+    image: "/my_portfolio_react/projects/miverse.png",
+    demoUrl: null,
+    codeUrl: null
   },
   {
     id: "project-4",
-    name: "ERP Solution",
-    description: "Enterprise resource planning mobile application for inventory management, order processing, and business analytics with offline-first architecture.",
-    technologies: ["Flutter", "Provider", "REST APIs", "SQLite"],
-    image: "/projects/erp-app.png",
-    demoUrl: "https://demo.example.com/erp",
-    codeUrl: "https://github.com/StarDustDivine7/erp-solution"
-  },
-  {
-    id: "project-5",
-    name: "AI Query Assistant",
-    description: "Intelligent query assistant powered by RAG systems and LLM integration, providing context-aware responses and automated workflow suggestions.",
-    technologies: ["Flutter", "Google Cloud", "RAG", "LLM", "Firebase"],
-    image: "/projects/ai-assistant.png"
-  },
-  {
-    id: "project-6",
-    name: "Video Calling App",
-    description: "High-quality peer-to-peer video calling application with screen sharing, chat, and recording capabilities built for healthcare consultations.",
-    technologies: ["Flutter", "WebRTC", "Socket.IO", "Firebase"],
-    image: "/projects/video-call-app.png",
-    codeUrl: "https://github.com/StarDustDivine7/video-calling"
+    name: "Maitys Elder Care",
+    description: "A dedicated healthcare emergency response platform. It connects elderly users or their caregivers with nearby hospitals and emergency services, providing critical support when every second counts.",
+    technologies: ["Flutter", "Google Maps", "Healthcare", "Firebase"],
+    image: "/my_portfolio_react/projects/elder-care.png",
+    demoUrl: "https://play.google.com/store/search?q=maitys&c=apps&hl=en_IN",
+    codeUrl: null
   }
 ];

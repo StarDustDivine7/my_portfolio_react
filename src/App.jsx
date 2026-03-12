@@ -9,7 +9,7 @@ import CursorSpotlight from './components/ui/CursorSpotlight';
 const About = lazy(() => import('./components/sections/About'));
 const Skills = lazy(() => import('./components/sections/Skills'));
 const Projects = lazy(() => import('./components/sections/Projects'));
-const Experience = lazy(() => import('./components/sections/Experience'));
+const Experience = lazy(() => import('./components/experience/ExperienceSection'));
 const Achievements = lazy(() => import('./components/sections/Achievements'));
 const Contact = lazy(() => import('./components/sections/Contact'));
 const DevPlayground = lazy(() => import('./components/devplayground/DevPlayground'));

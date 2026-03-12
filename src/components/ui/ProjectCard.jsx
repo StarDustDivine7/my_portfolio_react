@@ -13,8 +13,8 @@ const ProjectCard = ({ project }) => {
       {/* Project Image */}
       <div className="relative h-48 bg-dark-900 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-dark-900 to-transparent z-10 opacity-80" />
-        <img 
-          src={image} 
+        <img
+          src={image}
           alt={`${name} project screenshot`}
           className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
           loading="lazy"
@@ -29,11 +29,11 @@ const ProjectCard = ({ project }) => {
       <div className="p-6 flex flex-col flex-grow relative z-20">
         <h3 className="text-xl font-bold mb-2 text-white group-hover:text-primary-400 transition-colors">{name}</h3>
         <p className="text-gray-400 mb-4 flex-grow text-sm leading-relaxed">{description}</p>
-        
+
         {/* Technologies */}
         <div className="flex flex-wrap gap-2 mb-4">
           {technologies.map((tech, index) => (
-            <span 
+            <span
               key={index}
               className="px-3 py-1 bg-dark-700/50 border border-primary-500/20 text-primary-400 rounded-full text-xs font-medium tracking-wide shadow-[0_0_10px_rgba(6,182,212,0.1)]"
             >
@@ -44,25 +44,26 @@ const ProjectCard = ({ project }) => {
 
         {/* Action Buttons */}
         {(demoUrl || codeUrl) && (
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             {demoUrl && (
-              <Button 
-                variant="primary" 
-                size="sm" 
-                href={demoUrl} 
-                external={true}
-                className="flex items-center gap-2"
-                ariaLabel={`View ${name} demo`}
+              <a
+                href={demoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`View ${name} on Google Play`}
+                className="flex items-center gap-2 px-3 py-1.5 bg-dark-700/60 hover:bg-primary-500/20 border border-primary-500/30 hover:border-primary-500/60 text-primary-400 text-xs font-semibold rounded-lg transition-all"
               >
-                <FaExternalLinkAlt className="text-sm" />
-                View Demo
-              </Button>
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3.18 23.76c.3.18.65.2.97.07l12.67-7.32-2.79-2.79-10.85 10.04zM.5 1.04C.19 1.35 0 1.83 0 2.47v19.06c0 .64.19 1.12.5 1.43l.07.07 10.67-10.67v-.25L.57.97.5 1.04zM20.36 10.32l-2.82-1.63-3.12 3.12 3.12 3.12 2.85-1.64c.81-.47.81-1.51-.03-1.97zM4.15.24L16.82 7.55l-2.79 2.79L4.15.24z" />
+                </svg>
+                Google Play
+              </a>
             )}
             {codeUrl && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                href={codeUrl} 
+              <Button
+                variant="outline"
+                size="sm"
+                href={codeUrl}
                 external={true}
                 className="flex items-center gap-2"
                 ariaLabel={`View ${name} source code`}
