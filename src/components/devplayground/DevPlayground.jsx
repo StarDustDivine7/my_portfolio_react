@@ -5,6 +5,8 @@ import CodeEditor from './CodeEditor';
 import ConsoleOutput from './ConsoleOutput';
 import AIChat from './AIChat';
 
+// Trigger build: 2026-03-12 Setup live secrets
+
 const boilerplates = {
   javascript: `// JavaScript Boilerplate\nconsole.log("Hello from JavaScript!");\n\nfunction greet(name) {\n  return \`Welcome, \${name}!\`;\n}\n\nconsole.log(greet("Developer"));`,
   python: `# Python Boilerplate\ndef greet(name):\n    return f"Welcome, {name}!"\n\nprint("Hello from Python!")\nprint(greet("Developer"))`,
